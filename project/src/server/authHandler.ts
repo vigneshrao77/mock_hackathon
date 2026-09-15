@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectToDatabase, isMongoConnected } from './db.js';
 import UserModel, { type UserRole } from './models/User.js';
+import StudentProfileModel from './models/StudentProfile.js';
+import TeacherProfileModel from './models/TeacherProfile.js';
+import AdminProfileModel from './models/AdminProfile.js';
 
 export const ALLOWED_ROLES: readonly UserRole[] = ['admin', 'teacher', 'student'] as const;
 
@@ -89,6 +92,22 @@ function sendJson(res: ServerResponse, statusCode: number, data: any) {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify(data));
+}
+
+async function authenticate(req: IncomingMessage): Promise<{ userId: string; role: UserRole } | null> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  const token = authHeader.split(' ')[1];
+  if (!token) return null;
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: UserRole };
+    return decoded;
+  } catch {
+    return null;
+  }
 }
 
 export async function handleAuthRequest(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
@@ -274,6 +293,162 @@ export async function handleAuthRequest(req: IncomingMessage, res: ServerRespons
       return true;
     } catch {
       sendJson(res, 500, { message: 'Internal server error' });
+      return true;
+    }
+  }
+
+  // Route: GET /api/profile
+  if (url === '/api/profile' && req.method === 'GET') {
+    try {
+      const auth = await authenticate(req);
+      if (!auth) {
+        sendJson(res, 401, { message: 'Unauthorized' });
+        return true;
+      }
+      
+      const mongoReady = await connectToDatabase();
+      if (!mongoReady) {
+        sendJson(res, 503, { message: 'Database unavailable' });
+        return true;
+      }
+
+      let profile = null;
+      if (auth.role === 'student') profile = await StudentProfileModel.findOne({ userId: auth.userId });
+      else if (auth.role === 'teacher') profile = await TeacherProfileModel.findOne({ userId: auth.userId });
+      else if (auth.role === 'admin') profile = await AdminProfileModel.findOne({ userId: auth.userId });
+
+      if (!profile) {
+        sendJson(res, 404, { message: 'Profile not found' });
+        return true;
+      }
+
+      sendJson(res, 200, { profile });
+      return true;
+    } catch (err) {
+      sendJson(res, 500, { message: 'Internal server error' });
+      return true;
+    }
+  }
+
+  // Route: POST /api/profile
+  if (url === '/api/profile' && req.method === 'POST') {
+    try {
+      const auth = await authenticate(req);
+      if (!auth) {
+        sendJson(res, 401, { message: 'Unauthorized' });
+        return true;
+      }
+      
+      const mongoReady = await connectToDatabase();
+      if (!mongoReady) {
+        sendJson(res, 503, { message: 'Database unavailable' });
+        return true;
+      }
+
+      const body = await parseJsonBody(req);
+      
+      let profile = null;
+      if (auth.role === 'student') {
+        const existing = await StudentProfileModel.findOne({ userId: auth.userId });
+        if (existing) {
+          sendJson(res, 400, { message: 'Profile already exists' });
+          return true;
+        }
+        profile = await StudentProfileModel.create({
+          userId: auth.userId,
+          dob: body.dob ? new Date(body.dob) : undefined,
+          consent: body.consent || false,
+          profile: body.profile || {}
+        });
+      } else if (auth.role === 'teacher') {
+        const existing = await TeacherProfileModel.findOne({ userId: auth.userId });
+        if (existing) {
+          sendJson(res, 400, { message: 'Profile already exists' });
+          return true;
+        }
+        if (!body.employeeId) {
+          sendJson(res, 400, { message: 'employeeId is required for teachers' });
+          return true;
+        }
+        profile = await TeacherProfileModel.create({
+          userId: auth.userId,
+          employeeId: body.employeeId
+        });
+      } else if (auth.role === 'admin') {
+        const existing = await AdminProfileModel.findOne({ userId: auth.userId });
+        if (existing) {
+          sendJson(res, 400, { message: 'Profile already exists' });
+          return true;
+        }
+        if (!body.employeeId) {
+          sendJson(res, 400, { message: 'employeeId is required for admins' });
+          return true;
+        }
+        profile = await AdminProfileModel.create({
+          userId: auth.userId,
+          employeeId: body.employeeId
+        });
+      }
+
+      sendJson(res, 201, { message: 'Profile created', profile });
+      return true;
+    } catch (err: any) {
+      if (err.code === 11000) { // duplicate key error
+        sendJson(res, 400, { message: 'Profile or unique field already exists' });
+      } else {
+        sendJson(res, 500, { message: 'Internal server error', error: err.message });
+      }
+      return true;
+    }
+  }
+
+  // Route: PUT /api/profile
+  if (url === '/api/profile' && req.method === 'PUT') {
+    try {
+      const auth = await authenticate(req);
+      if (!auth) {
+        sendJson(res, 401, { message: 'Unauthorized' });
+        return true;
+      }
+      
+      const mongoReady = await connectToDatabase();
+      if (!mongoReady) {
+        sendJson(res, 503, { message: 'Database unavailable' });
+        return true;
+      }
+
+      const body = await parseJsonBody(req);
+      
+      let profile = null;
+      if (auth.role === 'student') {
+        profile = await StudentProfileModel.findOneAndUpdate(
+          { userId: auth.userId },
+          { $set: body },
+          { new: true, runValidators: true }
+        );
+      } else if (auth.role === 'teacher') {
+        profile = await TeacherProfileModel.findOneAndUpdate(
+          { userId: auth.userId },
+          { $set: body },
+          { new: true, runValidators: true }
+        );
+      } else if (auth.role === 'admin') {
+        profile = await AdminProfileModel.findOneAndUpdate(
+          { userId: auth.userId },
+          { $set: body },
+          { new: true, runValidators: true }
+        );
+      }
+
+      if (!profile) {
+        sendJson(res, 404, { message: 'Profile not found to update' });
+        return true;
+      }
+
+      sendJson(res, 200, { message: 'Profile updated', profile });
+      return true;
+    } catch (err: any) {
+      sendJson(res, 500, { message: 'Internal server error', error: err.message });
       return true;
     }
   }
