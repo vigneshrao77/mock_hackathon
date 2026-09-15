@@ -35,6 +35,11 @@ export async function connectToDatabase(): Promise<boolean> {
 
     isConnected = db.connection.readyState === 1;
     console.log('✅ Successfully connected to MongoDB Atlas. Database:', db.connection.name);
+
+    // Seed initial collections into MongoDB Atlas
+    const { seedAllCollections } = await import('./seedDatabase.js');
+    await seedAllCollections();
+
     return isConnected;
   } catch (error) {
     console.error('❌ MongoDB connection error:', (error as Error).message);

@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { handleAuthRequest } from './src/server/authHandler.ts';
+import { handleCurriculumRequest } from './src/server/curriculumHandler.ts';
 
-function authApiPlugin() {
+function serverApiPlugin() {
   return {
-    name: 'auth-api-plugin',
+    name: 'server-api-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         if (req.url?.startsWith('/api/auth/')) {
@@ -15,6 +16,14 @@ function authApiPlugin() {
             console.error('Auth middleware error:', err);
           }
         }
+        if (req.url?.startsWith('/api/curriculum')) {
+          try {
+            const handled = await handleCurriculumRequest(req, res);
+            if (handled) return;
+          } catch (err) {
+            console.error('Curriculum middleware error:', err);
+          }
+        }
         next();
       });
     },
@@ -22,7 +31,7 @@ function authApiPlugin() {
 }
 
 export default defineConfig({
-  plugins: [react(), authApiPlugin()],
+  plugins: [react(), serverApiPlugin()],
   server: {
     port: 5173,
     host: true,
