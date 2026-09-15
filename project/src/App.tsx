@@ -33,6 +33,7 @@ import TeacherStudentDetail from './pages/teacher/TeacherStudentDetail'
 import TeacherSubjects from './pages/teacher/TeacherSubjects'
 import TeacherModuleDetail from './pages/teacher/TeacherModuleDetail'
 import TeacherAssessments from './pages/teacher/TeacherAssessments'
+import TeacherAssessmentCreate from './pages/teacher/TeacherAssessmentCreate'
 import TeacherAssessmentDetail from './pages/teacher/TeacherAssessmentDetail'
 import TeacherAssignments from './pages/teacher/TeacherAssignments'
 import TeacherAssignmentCreate from './pages/teacher/TeacherAssignmentCreate'
@@ -155,6 +156,7 @@ function TeacherRoutes() {
       <Route path="subjects" element={<TeacherSubjects />} />
       <Route path="modules/:id" element={<TeacherModuleDetail />} />
       <Route path="assessments" element={<TeacherAssessments />} />
+      <Route path="assessments/create" element={<TeacherAssessmentCreate />} />
       <Route path="assessments/:id" element={<TeacherAssessmentDetail />} />
       <Route path="assignments" element={<TeacherAssignments />} />
       <Route path="assignments/create" element={<TeacherAssignmentCreate />} />
