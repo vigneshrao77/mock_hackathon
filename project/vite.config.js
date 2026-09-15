@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { handleAuthRequest } from './src/server/authHandler.ts';
+import { handleEvaluationRequest } from './src/server/evaluationHandler.ts';
 
 function authApiPlugin() {
   return {
@@ -21,8 +22,27 @@ function authApiPlugin() {
   };
 }
 
+function evaluationApiPlugin() {
+  return {
+    name: 'evaluation-api-plugin',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url?.startsWith('/api/evaluation/')) {
+          try {
+            const handled = await handleEvaluationRequest(req, res);
+            if (handled) return;
+          } catch (err) {
+            console.error('Evaluation middleware error:', err);
+          }
+        }
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), authApiPlugin()],
+  plugins: [react(), authApiPlugin(), evaluationApiPlugin()],
   server: {
     port: 5173,
     host: true,
