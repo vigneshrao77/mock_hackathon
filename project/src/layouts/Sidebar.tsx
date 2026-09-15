@@ -2,10 +2,10 @@ import { NavLink, ScrollArea, Box, Text, Stack, Group } from '@mantine/core'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { navConfig } from './navConfig'
 import { useAuth } from '../context/AuthContext'
-import { IconSchool } from '@tabler/icons-react'
+import { IconSchool, IconLogout } from '@tabler/icons-react'
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { role } = useAuth()
+  const { role, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const items = navConfig[role]
@@ -44,6 +44,14 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           )
         })}
       </ScrollArea>
+      <Box p="xs" style={{ borderTop: '1px solid #e2e8f0' }}>
+        <NavLink
+          label="Logout"
+          leftSection={<IconLogout size={18} color="#e53e3e" />}
+          onClick={logout}
+          style={{ borderRadius: 6, color: '#e53e3e', fontWeight: 600 }}
+        />
+      </Box>
     </Box>
   )
 }

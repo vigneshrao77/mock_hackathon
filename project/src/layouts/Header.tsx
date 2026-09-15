@@ -32,17 +32,6 @@ export function Header({ onMenuClick }: HeaderProps) {
         <Text fw={700} size="md" c="navy.9" className="header-title">{roleLabel} Portal</Text>
       </Group>
       <Group gap="sm" align="center" wrap="nowrap">
-        <SegmentedControl
-          size="xs"
-          value={role}
-          onChange={(v) => switchRole(v as UserRole)}
-          data={[
-            { label: 'Student', value: 'student' },
-            { label: 'Teacher', value: 'teacher' },
-            { label: 'Admin', value: 'admin' },
-          ]}
-          className="role-switcher"
-        />
         <Indicator label={unread > 0 ? String(unread) : undefined} size={16} color="red">
           <Menu width={320} position="bottom-end" shadow="md">
             <Menu.Target>

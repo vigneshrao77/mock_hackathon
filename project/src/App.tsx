@@ -56,12 +56,49 @@ import AdminAudit from './pages/admin/AdminAudit'
 import AdminNotifications from './pages/admin/AdminNotifications'
 import AdminProfile from './pages/admin/AdminProfile'
 
+// Auth pages
+import LoginPage from './pages/auth/LoginPage'
+import SignupPage from './pages/auth/SignupPage'
+
 function AppRoutes() {
-  const { role } = useAuth()
+  const { user, role, loading } = useAuth()
+
+  if (loading) {
+    return null
+  }
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={`/${role}/dashboard`} replace />} />
-      <Route path="/login" element={<Navigate to={`/${role}/dashboard`} replace />} />
+      <Route
+        path="/"
+        element={
+          user ? (
+            <Navigate to={`/${user.role || role}/dashboard`} replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          user ? (
+            <Navigate to={`/${user.role || role}/dashboard`} replace />
+          ) : (
+            <LoginPage />
+          )
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          user ? (
+            <Navigate to={`/${user.role || role}/dashboard`} replace />
+          ) : (
+            <SignupPage />
+          )
+        }
+      />
 
       {/* Student routes */}
       <Route path="/student/*" element={<AppLayout allowedRole="student"><StudentRoutes /></AppLayout>} />
@@ -72,7 +109,16 @@ function AppRoutes() {
       {/* Admin routes */}
       <Route path="/admin/*" element={<AppLayout allowedRole="admin"><AdminRoutes /></AppLayout>} />
 
-      <Route path="*" element={<Navigate to={`/${role}/dashboard`} replace />} />
+      <Route
+        path="*"
+        element={
+          user ? (
+            <Navigate to={`/${user.role || role}/dashboard`} replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
     </Routes>
   )
 }

@@ -14,11 +14,12 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, allowedRole }: AppLayoutProps) {
-  const { role, loading } = useAuth()
+  const { user, role, loading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const isTablet = useMediaQuery('(max-width: 62em)')
 
   if (loading) return null
+  if (!user) return <Navigate to="/login" replace />
   if (role !== allowedRole) return <Navigate to={`/${role}/dashboard`} replace />
 
   return (
