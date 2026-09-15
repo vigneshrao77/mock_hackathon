@@ -3,13 +3,14 @@ import react from '@vitejs/plugin-react';
 import { handleAuthRequest } from './src/server/authHandler.ts';
 import { handleCurriculumRequest } from './src/server/curriculumHandler.ts';
 import { handleEvaluationRequest } from './src/server/evaluationHandler.ts';
+import { handleChatRequest } from './src/server/chatHandler.ts';
 
 function serverApiPlugin() {
   return {
     name: 'server-api-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (req.url?.startsWith('/api/auth/')) {
+        if (req.url?.startsWith('/api/auth/') || req.url?.startsWith('/api/profile')) {
           try {
             const handled = await handleAuthRequest(req, res);
             if (handled) return;
@@ -23,6 +24,14 @@ function serverApiPlugin() {
             if (handled) return;
           } catch (err) {
             console.error('Curriculum middleware error:', err);
+          }
+        }
+        if (req.url?.startsWith('/api/chat') || req.url?.startsWith('/api/users')) {
+          try {
+            const handled = await handleChatRequest(req, res);
+            if (handled) return;
+          } catch (err) {
+            console.error('Chat middleware error:', err);
           }
         }
         next();

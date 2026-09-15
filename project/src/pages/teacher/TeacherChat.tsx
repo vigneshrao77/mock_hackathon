@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Grid, Card, Text, Group, TextInput, Button, Stack, Avatar, Paper, Skeleton } from '@mantine/core'
-import { IconSend, IconMessage } from '@tabler/icons-react'
+import { Grid, Card, Text, Group, TextInput, Button, Stack, Avatar, Paper, Skeleton, ActionIcon, Modal } from '@mantine/core'
+import { IconSend, IconMessage, IconPlus } from '@tabler/icons-react'
 import { PageHeader } from '../../components/PageHeader'
 import { mockApi } from '../../services/mockApi'
 import { useAuth } from '../../context/AuthContext'
@@ -14,6 +14,8 @@ export default function TeacherChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [loading, setLoading] = useState(true)
+  const [newChatOpen, setNewChatOpen] = useState(false)
+  const [creatingChat, setCreatingChat] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -44,7 +46,23 @@ export default function TeacherChat() {
 
   if (loading) return <Skeleton height={400} />
 
-  const getStudentName = (studentId: string) => students.find((s) => s.id === studentId)?.name || 'Student'
+  const getStudentName = (studentId: string | any) => {
+    if (typeof studentId === 'object' && studentId?.name) return studentId.name;
+    return students.find((s) => s.id === studentId)?.name || 'Student'
+  }
+
+  const handleStartChat = async (studentId: string) => {
+    setCreatingChat(true)
+    try {
+      const conv = await mockApi.createConversation(studentId)
+      const convs = await mockApi.getConversations(user!.id, 'teacher')
+      setConversations(convs)
+      setActiveConv(conv)
+      setNewChatOpen(false)
+    } finally {
+      setCreatingChat(false)
+    }
+  }
 
   return (
     <div>
@@ -53,7 +71,12 @@ export default function TeacherChat() {
       <Grid gutter="md">
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Card withBorder padding="sm" radius="md">
-            <Text fw={600} size="sm" p="xs">Conversations</Text>
+            <Group justify="space-between" p="xs">
+              <Text fw={600} size="sm">Conversations</Text>
+              <ActionIcon color="navy" variant="light" onClick={() => setNewChatOpen(true)}>
+                <IconPlus size={18} />
+              </ActionIcon>
+            </Group>
             <Stack gap="xs">
               {conversations.map((c) => {
                 const active = activeConv?.id === c.id
@@ -130,6 +153,28 @@ export default function TeacherChat() {
           </Card>
         </Grid.Col>
       </Grid>
+
+      <Modal opened={newChatOpen} onClose={() => setNewChatOpen(false)} title="New Chat" centered>
+        <Text size="sm" c="dimmed" mb="md">Select a student to start a conversation with.</Text>
+        <Stack gap="sm">
+          {(!students || students.length === 0) ? (
+            <Text size="sm" c="dimmed">No students available.</Text>
+          ) : students.map(student => (
+            <Group key={student.id} justify="space-between" style={{ padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <Group gap="sm">
+                <Avatar color="navy" radius="xl">{student.name.substring(0, 2)}</Avatar>
+                <div>
+                  <Text size="sm" fw={500}>{student.name}</Text>
+                  <Text size="xs" c="dimmed">{student.email}</Text>
+                </div>
+              </Group>
+              <Button size="xs" variant="light" color="navy" onClick={() => handleStartChat(student.id)} loading={creatingChat}>
+                Message
+              </Button>
+            </Group>
+          ))}
+        </Stack>
+      </Modal>
     </div>
   )
 }

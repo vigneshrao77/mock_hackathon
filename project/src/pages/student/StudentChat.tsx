@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Card, Text, Group, Stack, ThemeIcon, Box, Avatar, TextInput, Button, ScrollArea, Badge, Divider, ActionIcon, MediaQuery } from '@mantine/core'
+import { Card, Text, Group, Stack, ThemeIcon, Box, Avatar, TextInput, Button, ScrollArea, Badge, ActionIcon, Modal, Loader } from '@mantine/core'
 import { useAuth } from '../../context/AuthContext'
 import { mockApi } from '../../services/mockApi'
 import { useAsync } from '../../hooks/useAsync'
@@ -7,10 +7,10 @@ import { PageHeader } from '../../components/PageHeader'
 import { LoadingState, EmptyState, ErrorState } from '../../components/States'
 import { notifications } from '@mantine/notifications'
 import {
-  IconMessage2, IconSend, IconArrowLeft, IconCheck, IconChecks, IconUsers,
+  IconMessage2, IconSend, IconArrowLeft, IconCheck, IconChecks, IconUsers, IconPlus,
 } from '@tabler/icons-react'
 import dayjs from 'dayjs'
-import type { Conversation, Message } from '../../types'
+import type { Conversation, Message, Teacher } from '../../types'
 
 export default function StudentChat() {
   const { user } = useAuth()
@@ -24,6 +24,10 @@ export default function StudentChat() {
   const { data: conversations, loading, error, refetch } = useAsync(
     () => user ? mockApi.getConversations(user.id, 'student') : Promise.resolve([]), [user?.id]
   )
+
+  const [newChatOpen, setNewChatOpen] = useState(false)
+  const [creatingChat, setCreatingChat] = useState(false)
+  const { data: teachers } = useAsync(() => mockApi.getTeachers(), [])
 
   const loadMessages = async (conv: Conversation) => {
     setLoadingMessages(true)
@@ -85,19 +89,37 @@ export default function StudentChat() {
   }
 
   const getTeacherName = (conv: Conversation) => {
-    // The teacher's name is derived from the conversation
-    // We only have teacherId; use a fallback approach
+    if (conv.teacherId && typeof conv.teacherId === 'object' && 'name' in conv.teacherId) return (conv.teacherId as any).name;
     return 'Your Teacher'
+  }
+
+  const handleStartChat = async (teacherId: string) => {
+    setCreatingChat(true)
+    try {
+      const conv = await mockApi.createConversation(teacherId)
+      await refetch()
+      setSelectedConv(conv)
+      setNewChatOpen(false)
+    } catch {
+      notifications.show({ message: 'Failed to start chat', color: 'red' })
+    } finally {
+      setCreatingChat(false)
+    }
   }
 
   const renderConversationList = () => (
     <Card withBorder padding={0} radius="md" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box p="md" style={{ borderBottom: '1px solid #e2e8f0' }}>
-        <Group gap="sm">
-          <ThemeIcon size={32} radius="md" color="navy" variant="light">
-            <IconUsers size={16} />
-          </ThemeIcon>
-          <Text fw={600} size="sm">Conversations</Text>
+        <Group justify="space-between" align="center">
+          <Group gap="sm">
+            <ThemeIcon size={32} radius="md" color="navy" variant="light">
+              <IconUsers size={16} />
+            </ThemeIcon>
+            <Text fw={600} size="sm">Conversations</Text>
+          </Group>
+          <ActionIcon color="navy" variant="light" onClick={() => setNewChatOpen(true)}>
+            <IconPlus size={18} />
+          </ActionIcon>
         </Group>
       </Box>
       <ScrollArea style={{ flex: 1 }}>
@@ -272,6 +294,28 @@ export default function StudentChat() {
           )}
         </Box>
       </Box>
+
+      <Modal opened={newChatOpen} onClose={() => setNewChatOpen(false)} title="New Chat" centered>
+        <Text size="sm" c="dimmed" mb="md">Select a teacher to start a conversation with.</Text>
+        <Stack gap="sm">
+          {(!teachers || teachers.length === 0) ? (
+            <Text size="sm" c="dimmed">No teachers available.</Text>
+          ) : teachers.map(teacher => (
+            <Group key={teacher.id} justify="space-between" style={{ padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <Group gap="sm">
+                <Avatar color="navy" radius="xl">{teacher.name.substring(0, 2)}</Avatar>
+                <div>
+                  <Text size="sm" fw={500}>{teacher.name}</Text>
+                  <Text size="xs" c="dimmed">{teacher.email}</Text>
+                </div>
+              </Group>
+              <Button size="xs" variant="light" color="navy" onClick={() => handleStartChat(teacher.id)} loading={creatingChat}>
+                Message
+              </Button>
+            </Group>
+          ))}
+        </Stack>
+      </Modal>
 
       <style>{`
         @media (max-width: 768px) {
