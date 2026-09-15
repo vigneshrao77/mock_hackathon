@@ -22,7 +22,7 @@ export default function StudentChat() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const { data: conversations, loading, error, refetch } = useAsync(
-    () => mockApi.getConversations(user!.id, 'student'), [user?.id]
+    () => user ? mockApi.getConversations(user.id, 'student') : Promise.resolve([]), [user?.id]
   )
 
   const loadMessages = async (conv: Conversation) => {
@@ -52,10 +52,10 @@ export default function StudentChat() {
   }, [allMessages])
 
   const handleSend = async () => {
-    if (!messageText.trim() || !selectedConv) return
+    if (!messageText.trim() || !selectedConv || !user) return
     setSending(true)
     try {
-      const msg = await mockApi.sendMessage(selectedConv.id, user!.id, 'student', messageText)
+      const msg = await mockApi.sendMessage(selectedConv.id, user.id, 'student', messageText)
       setAllMessages((prev) => [...prev, msg])
       setMessageText('')
       refetch()

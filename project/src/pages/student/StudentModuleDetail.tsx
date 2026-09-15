@@ -54,7 +54,7 @@ export default function StudentModuleDetail() {
   const { data: assessments } = useAsync(
     () => mockApi.getAssessmentsByModule(id!), [id]
   )
-  const { data: progress } = useAsync(() => mockApi.getProgress(user!.id), [user?.id])
+  const { data: progress } = useAsync(() => user ? mockApi.getProgress(user.id) : Promise.resolve([]), [user?.id])
 
   const loading = moduleLoading
 

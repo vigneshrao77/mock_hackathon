@@ -64,7 +64,7 @@ export default function StudentContentViewer() {
     () => content ? mockApi.getAssessmentsByModule(content.moduleId) : Promise.resolve([]),
     [content?.moduleId]
   )
-  const { data: progress } = useAsync(() => mockApi.getProgress(user!.id), [user?.id])
+  const { data: progress } = useAsync(() => user ? mockApi.getProgress(user.id) : Promise.resolve([]), [user?.id])
 
   if (loading) return <LoadingState message="Loading content..." />
   if (error) return <ErrorState message={error} onRetry={refetch} />
@@ -93,9 +93,10 @@ export default function StudentContentViewer() {
   const moduleAssessments = (assessments || []).filter((a) => a.status === 'PUBLISHED')
 
   const handleMarkComplete = async () => {
+    if (!user) return
     setMarking(true)
     try {
-      await mockApi.markContentComplete(user!.id, content.id, content.moduleId, subject?.id || '')
+      await mockApi.markContentComplete(user.id, content.id, content.moduleId, subject?.id || '')
       notifications.show({ message: 'Content marked as complete!', color: 'green', size: 'sm' })
       refetch()
     } catch {

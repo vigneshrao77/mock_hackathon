@@ -40,11 +40,11 @@ export default function StudentProgress() {
   const student = user as Student
 
   const { data: subjects, loading: subjectsLoading, error, refetch } = useAsync(() => mockApi.getSubjects(), [])
-  const { data: progress } = useAsync(() => mockApi.getProgress(user!.id), [user?.id])
-  const { data: events } = useAsync(() => mockApi.getProgressEvents(user!.id), [user?.id])
+  const { data: progress } = useAsync(() => user ? mockApi.getProgress(user.id) : Promise.resolve([]), [user?.id])
+  const { data: events } = useAsync(() => user ? mockApi.getProgressEvents(user.id) : Promise.resolve([]), [user?.id])
   const { data: assessments } = useAsync(() => mockApi.getAssessments(), [])
-  const { data: submissions } = useAsync(() => mockApi.getAssessmentSubmissions(user!.id), [user?.id])
-  const { data: assignments } = useAsync(() => mockApi.getAssignmentsByStudent(user!.id), [user?.id])
+  const { data: submissions } = useAsync(() => user ? mockApi.getAssessmentSubmissions(user.id) : Promise.resolve([]), [user?.id])
+  const { data: assignments } = useAsync(() => user ? mockApi.getAssignmentsByStudent(user.id) : Promise.resolve([]), [user?.id])
   const { data: modules } = useAsync(() => mockApi.getModules(), [])
 
   if (subjectsLoading) return <LoadingState message="Loading progress data..." />

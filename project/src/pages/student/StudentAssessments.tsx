@@ -14,7 +14,7 @@ export default function StudentAssessments() {
 
   const { data: assessments, loading, error, refetch } = useAsync(() => mockApi.getAssessments(), [])
   const { data: submissions } = useAsync(
-    () => mockApi.getAssessmentSubmissions(user!.id), [user?.id]
+    () => user ? mockApi.getAssessmentSubmissions(user.id) : Promise.resolve([]), [user?.id]
   )
 
   if (loading) return <LoadingState message="Loading assessments..." />

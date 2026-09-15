@@ -32,7 +32,7 @@ export default function StudentAssessmentPlayer() {
     () => mockApi.getAssessment(id!), [id]
   )
   const { data: submissions } = useAsync(
-    () => mockApi.getAssessmentSubmissions(user!.id), [user?.id]
+    () => user ? mockApi.getAssessmentSubmissions(user.id) : Promise.resolve([]), [user?.id]
   )
 
   const [currentQ, setCurrentQ] = useState(0)
@@ -149,29 +149,29 @@ export default function StudentAssessmentPlayer() {
     })
   }
 
-  const gradeQuestion = (q: Question): number => {
-    const ans = answers[q.id]
-    if (!ans) return 0
-    if (q.type === 'mcq' || q.type === 'true_false') {
-      return ans === q.correctAnswer ? q.marks : 0
-    }
-    if (q.type === 'multiple_select') {
-      const correct = (q.correctAnswer as string[]) || []
-      const selected = Array.isArray(ans) ? ans : []
-      const correctSelected = selected.filter((s) => correct.includes(s))
-      const wrongSelected = selected.filter((s) => !correct.includes(s))
-      if (correctSelected.length === correct.length && wrongSelected.length === 0) return q.marks
-      return Math.round((correctSelected.length / correct.length) * q.marks * 0.5)
-    }
-    // short_answer, audio_response, video_response — award full marks for completion
-    return q.marks
-  }
-
   const handleSubmit = async () => {
+    if (!assessment || !user) return
     setSubmitting(true)
     try {
-      const score = questions.reduce((sum, q) => sum + gradeQuestion(q), 0)
-      const percentage = Math.round((score / assessment.totalMarks) * 100)
+      let score = 0
+      questions.forEach((q) => {
+        const userAns = answers[q.id]
+        if (!userAns) return
+        if (q.type === 'mcq' || q.type === 'true_false') {
+          if (userAns === q.correctAnswer) score += q.marks
+        } else if (q.type === 'multiple_select' && Array.isArray(userAns) && Array.isArray(q.correctAnswer)) {
+          const isCorrect = userAns.length === q.correctAnswer.length && userAns.every((a) => (q.correctAnswer as string[]).includes(a))
+          if (isCorrect) score += q.marks
+        } else if (q.type === 'short_answer') {
+          if (typeof userAns === 'string' && typeof q.correctAnswer === 'string') {
+            if (userAns.trim().toLowerCase() === q.correctAnswer.toLowerCase()) score += q.marks
+          }
+        } else {
+          score += q.marks
+        }
+      })
+
+      const percentage = Math.round((score / (assessment.totalMarks || 1)) * 100)
       const passed = score >= assessment.passScore
       const feedback = passed
         ? `Great job! You scored ${percentage}% on this assessment.`
@@ -179,7 +179,7 @@ export default function StudentAssessmentPlayer() {
 
       await mockApi.submitAssessment({
         assessmentId: assessment.id,
-        studentId: user!.id,
+        studentId: user.id,
         answers,
         score,
         percentage,
@@ -343,7 +343,6 @@ export default function StudentAssessmentPlayer() {
               )}
             </Group>
           </Card>
-        </Box>
 
         {/* Question navigator */}
         </Grid.Col>

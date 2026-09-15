@@ -28,7 +28,7 @@ export default function StudentAssignments() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
 
   const { data: assignments, loading, error, refetch } = useAsync(
-    () => mockApi.getAssignmentsByStudent(user!.id), [user?.id]
+    () => user ? mockApi.getAssignmentsByStudent(user.id) : Promise.resolve([]), [user?.id]
   )
   const { data: subjects } = useAsync(() => mockApi.getSubjects(), [])
 

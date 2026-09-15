@@ -14,7 +14,7 @@ export default function StudentSubjects() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { data: subjects, loading, error, refetch } = useAsync(() => mockApi.getSubjects(), [])
-  const { data: progress } = useAsync(() => mockApi.getProgress(user!.id), [user?.id])
+  const { data: progress } = useAsync(() => user ? mockApi.getProgress(user.id) : Promise.resolve([]), [user?.id])
 
   if (loading) return <LoadingState message="Loading subjects..." />
   if (error) return <ErrorState message={error} onRetry={refetch} />

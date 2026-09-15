@@ -14,11 +14,11 @@ export default function StudentDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { data: subjects, loading } = useAsync(() => mockApi.getSubjects(), [])
-  const { data: assignments } = useAsync(() => mockApi.getAssignmentsByStudent(user!.id), [user?.id])
+  const { data: assignments } = useAsync(() => user ? mockApi.getAssignmentsByStudent(user.id) : Promise.resolve([]), [user?.id])
   const { data: assessments } = useAsync(() => mockApi.getAssessments(), [])
-  const { data: events } = useAsync(() => mockApi.getProgressEvents(user!.id), [user?.id])
+  const { data: events } = useAsync(() => user ? mockApi.getProgressEvents(user.id) : Promise.resolve([]), [user?.id])
   const { data: leaderboard } = useAsync(() => mockApi.getLeaderboard(), [])
-  const { data: notifs } = useAsync(() => mockApi.getNotifications(user!.id), [user?.id])
+  const { data: notifs } = useAsync(() => user ? mockApi.getNotifications(user.id) : Promise.resolve([]), [user?.id])
 
   if (loading) return <LoadingState />
 

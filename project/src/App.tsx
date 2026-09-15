@@ -1,7 +1,7 @@
 import { MantineProvider, AppShell } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import { ModalsProvider } from '@mantine/modals'
-import { Nprogress } from '@mantine/nprogress'
+import { NavigationProgress } from '@mantine/nprogress'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { theme } from './theme'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -144,7 +144,7 @@ export default function App() {
   return (
     <MantineProvider theme={theme}>
       <Notifications position="top-right" />
-      <Nprogress />
+      <NavigationProgress />
       <ModalsProvider>
         <BrowserRouter>
           <AuthProvider>

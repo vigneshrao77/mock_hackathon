@@ -61,10 +61,10 @@ export default function StudentHealth() {
   const { user } = useAuth()
 
   const { data: healthRecords, loading, error, refetch } = useAsync(
-    () => mockApi.getHealthRecords(user!.id), [user?.id]
+    () => user ? mockApi.getHealthRecords(user.id) : Promise.resolve([]), [user?.id]
   )
   const { data: healthChecks } = useAsync(
-    () => mockApi.getHealthChecks(user!.id), [user?.id]
+    () => user ? mockApi.getHealthChecks(user.id) : Promise.resolve([]), [user?.id]
   )
 
   if (loading) return <LoadingState message="Loading health records..." />
