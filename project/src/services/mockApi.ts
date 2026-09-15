@@ -307,7 +307,7 @@ export const mockApi = {
   },
   async submitAssignment(assignmentId: string, textResponse: string, attachments: { id: string; name: string; size: number; type: string }[]) {
     try {
-      const res = await fetchApi(`/api/evaluation/submissions/assignment/${assignmentId}`, { method: 'POST', body: JSON.stringify({ textResponse, attachments }) });
+      const res = await fetchApi(`/api/evaluation/assignments/${assignmentId}/submit`, { method: 'POST', body: JSON.stringify({ textResponse, attachments }) });
       return mapId(res.submission);
     } catch {
       const assignment = assignments.find((a) => a.id === assignmentId)

@@ -26,7 +26,7 @@ const AttachmentSchema = new Schema<IAttachment>(
 );
 
 export interface IAssignment {
-  studentId: Types.ObjectId;
+  studentId?: Types.ObjectId;
   teacherId: Types.ObjectId;
   subjectId?: Types.ObjectId;
   moduleId?: Types.ObjectId;
@@ -45,7 +45,6 @@ const AssignmentSchema = new Schema<IAssignmentDocument>(
     studentId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Student is required'],
     },
     teacherId: {
       type: Schema.Types.ObjectId,

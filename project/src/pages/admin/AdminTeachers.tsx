@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Card, Table, Text, Group, Badge, Skeleton, Avatar } from '@mantine/core'
+import { Card, Table, Text, Group, Badge, Skeleton, Avatar, Button } from '@mantine/core'
+import { IconPlus } from '@tabler/icons-react'
 import { PageHeader } from '../../components/PageHeader'
 import { mockApi } from '../../services/mockApi'
 import type { Teacher } from '../../types'
@@ -19,7 +20,11 @@ export default function AdminTeachers() {
 
   return (
     <div>
-      <PageHeader title="Teacher Management" subtitle="Manage teaching staff and assigned subject permissions" />
+      <PageHeader 
+        title="Teacher Management" 
+        subtitle="Manage teaching staff and assigned subject permissions" 
+        action={<Button leftSection={<IconPlus size={16} />}>Add Teacher</Button>}
+      />
 
       <Card withBorder padding="lg" radius="md">
         <Table verticalSpacing="sm">

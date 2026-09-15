@@ -18,8 +18,8 @@ export interface IQuestion {
 }
 
 export interface IAssessment {
-  moduleId: Types.ObjectId;
-  subjectId: Types.ObjectId;
+  moduleId?: Types.ObjectId;
+  subjectId?: Types.ObjectId;
   title: string;
   description: string;
   questions: IQuestion[];
@@ -52,12 +52,10 @@ const AssessmentSchema = new Schema<IAssessmentDocument>(
     moduleId: {
       type: Schema.Types.ObjectId,
       ref: 'Module',
-      required: [true, 'Module is required'],
     },
     subjectId: {
       type: Schema.Types.ObjectId,
       ref: 'Subject',
-      required: [true, 'Subject is required'],
     },
     title: {
       type: String,

@@ -46,7 +46,7 @@ export const navConfig: Record<UserRole, NavItem[]> = {
     { label: 'Admins', icon: IconShield, path: '/admin/admins' },
     // Programs removed — data model kept for referential integrity
     { label: 'Subjects', icon: IconBook, path: '/admin/subjects' },
-    { label: 'Analytics', icon: IconChartDots, path: '/admin/analytics' },
+
     { label: 'Reports', icon: IconReport, path: '/admin/reports' },
     // Audit Logs removed — audit events now surface in Notifications (isAudit: true)
     { label: 'Notifications', icon: IconBell, path: '/admin/notifications' },

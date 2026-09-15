@@ -35,36 +35,17 @@ function seedInMem(id: string, name: string, email: string, rawPassword: string,
   });
 }
 
-seedInMem('usr_admin_1', 'Diksha Admin', 'admin@diksha.org', 'password123', 'admin');
-seedInMem('usr_teacher_1', 'Prof. Sharma', 'teacher@diksha.org', 'password123', 'teacher');
-seedInMem('usr_student_1', 'Aarav Patel', 'student@diksha.org', 'password123', 'student');
+import mongoose from 'mongoose';
+
+seedInMem(new mongoose.Types.ObjectId().toString(), 'Diksha Admin', 'admin@diksha.org', 'password123', 'admin');
+seedInMem(new mongoose.Types.ObjectId().toString(), 'Prof. Sharma', 'teacher@diksha.org', 'password123', 'teacher');
+seedInMem(new mongoose.Types.ObjectId().toString(), 'Aarav Patel', 'student@diksha.org', 'password123', 'student');
 
 let mongoSeeded = false;
 async function ensureMongoSeeded() {
   if (mongoSeeded || !isMongoConnected()) return;
-  try {
-    const count = await UserModel.countDocuments();
-    if (count === 0) {
-      const demoAccounts = [
-        { name: 'Diksha Admin', email: 'admin@diksha.org', password: 'password123', role: 'admin' },
-        { name: 'Prof. Sharma', email: 'teacher@diksha.org', password: 'password123', role: 'teacher' },
-        { name: 'Aarav Patel', email: 'student@diksha.org', password: 'password123', role: 'student' },
-      ];
-      for (const account of demoAccounts) {
-        const passwordHash = await bcrypt.hash(account.password, 10);
-        await UserModel.create({
-          name: account.name,
-          email: account.email.toLowerCase(),
-          passwordHash,
-          role: account.role as UserRole,
-        });
-      }
-      console.log('🌱 Seeded demo accounts into MongoDB Atlas successfully.');
-    }
-    mongoSeeded = true;
-  } catch (err) {
-    console.error('Error seeding demo accounts into MongoDB:', (err as Error).message);
-  }
+  // Seeding is now handled centrally by seedDatabase.ts when db.ts connects.
+  mongoSeeded = true;
 }
 
 function parseJsonBody(req: IncomingMessage): Promise<any> {
@@ -241,6 +222,11 @@ export async function handleAuthRequest(req: IncomingMessage, res: ServerRespons
           }
         );
 
+        let profile = null;
+        if (user.role === 'student') profile = await StudentProfileModel.findOne({ userId: user._id }).lean();
+        else if (user.role === 'teacher') profile = await TeacherProfileModel.findOne({ userId: user._id }).lean();
+        else if (user.role === 'admin') profile = await AdminProfileModel.findOne({ userId: user._id }).lean();
+
         sendJson(res, 200, {
           token,
           user: {
@@ -248,6 +234,7 @@ export async function handleAuthRequest(req: IncomingMessage, res: ServerRespons
             name: user.name,
             email: user.email,
             role: user.role,
+            ...(profile || {}),
           },
         });
         return true;

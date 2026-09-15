@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import UserModel from './models/User.js';
 import ProgramModel from './models/Program.js';
 import CohortModel from './models/Cohort.js';
@@ -12,11 +13,27 @@ import AdminProfileModel from './models/AdminProfile.js';
 
 let databaseSeeded = false;
 
+import bcrypt from 'bcryptjs';
+
 export async function seedAllCollections(): Promise<void> {
   if (databaseSeeded) return;
 
   try {
     console.log('🌱 Checking MongoDB Atlas collections for seeding...');
+
+    // 0. Seed Users
+    const userCount = await UserModel.countDocuments();
+    if (userCount === 0) {
+      const passwordHash = await bcrypt.hash('password123', 10);
+      
+      const admin = await UserModel.create({ name: 'Diksha Admin', email: 'admin@diksha.org', passwordHash, role: 'admin' });
+      const teacher = await UserModel.create({ name: 'Prof. Sharma', email: 'teacher@diksha.org', passwordHash, role: 'teacher' });
+      const student = await UserModel.create({ name: 'Aarav Patel', email: 'student@diksha.org', passwordHash, role: 'student' });
+      
+      await AdminProfileModel.create({ userId: admin._id, permissions: ['all'] });
+      await TeacherProfileModel.create({ userId: teacher._id, subjects: [], bio: 'Senior Professor' });
+      await StudentProfileModel.create({ userId: student._id, grade: '10th', programId: new mongoose.Types.ObjectId() });
+    }
 
     // 1. Seed Programs
     const programCount = await ProgramModel.countDocuments();

@@ -195,6 +195,13 @@ async function upsertLeaderboardAssignmentScore(studentId: string) {
         },
       }
     );
+
+    // Also update StudentProfile model
+    const StudentProfileModel = (await import('./models/StudentProfile.js')).default;
+    await StudentProfileModel.updateOne(
+      { userId: studentId },
+      { $set: { assignmentAverage: avgPct } }
+    );
   } catch (err) {
     console.error('LeaderboardScore upsert error:', (err as Error).message);
   }
@@ -235,14 +242,14 @@ export async function handleEvaluationRequest(
       const body = await parseJsonBody(req);
       const { moduleId, subjectId, title, description, questions, totalMarks, passScore, maxAttempts, status } = body;
 
-      if (!moduleId || !subjectId || !title || totalMarks === undefined || passScore === undefined) {
-        sendJson(res, 400, { message: 'moduleId, subjectId, title, totalMarks, and passScore are required' });
+      if (!title || totalMarks === undefined || passScore === undefined) {
+        sendJson(res, 400, { message: 'title, totalMarks, and passScore are required' });
         return true;
       }
 
       const assessment = await AssessmentModel.create({
-        moduleId,
-        subjectId,
+        moduleId: moduleId || undefined,
+        subjectId: subjectId || undefined,
         title: title.trim(),
         description: description ?? '',
         questions: questions ?? [],
@@ -546,11 +553,28 @@ export async function handleEvaluationRequest(
         return true;
       }
 
+      if (studentId === 'ALL') {
+        const assignment = await AssignmentModel.create({
+          studentId: undefined, // Shared assignment
+          teacherId: user.userId,
+          subjectId: subjectId || undefined,
+          moduleId: moduleId || undefined,
+          title: title.trim(),
+          instructions: instructions ?? '',
+          attachments: attachments ?? [],
+          maxMarks,
+          dueDate: new Date(dueDate),
+          status: 'PUBLISHED', // Shared assignments are marked PUBLISHED
+        });
+        sendJson(res, 201, { message: 'Shared assignment created for all students', assignments: [assignment] });
+        return true;
+      }
+
       const assignment = await AssignmentModel.create({
         studentId,
         teacherId: user.userId,
-        subjectId,
-        moduleId,
+        subjectId: subjectId || undefined,
+        moduleId: moduleId || undefined,
         title: title.trim(),
         instructions: instructions ?? '',
         attachments: attachments ?? [],
@@ -576,18 +600,56 @@ export async function handleEvaluationRequest(
       const qs = new URLSearchParams(rawUrl.split('?')[1] ?? '');
       const filter: Record<string, any> = {};
 
+      const mongoose = (await import('mongoose')).default;
+      let targetStudentId = qs.get('studentId');
+
       if (user.role === 'student') {
-        filter.studentId = user.userId;
+        const sid = mongoose.Types.ObjectId.isValid(user.userId) ? user.userId : null;
+        targetStudentId = sid as string;
+        filter.$or = [
+          { studentId: sid },
+          { studentId: { $exists: false } },
+          { studentId: null }
+        ];
       } else if (user.role === 'teacher') {
-        filter.teacherId = user.userId;
+        filter.teacherId = mongoose.Types.ObjectId.isValid(user.userId) ? user.userId : null;
+        if (targetStudentId) filter.studentId = targetStudentId;
+      } else {
+        // admin sees all
+        if (targetStudentId) filter.studentId = targetStudentId;
       }
-      // admin sees all
-      if (qs.get('studentId') && user.role !== 'student') filter.studentId = qs.get('studentId');
+
       if (qs.get('subjectId')) filter.subjectId = qs.get('subjectId');
       if (qs.get('moduleId')) filter.moduleId = qs.get('moduleId');
-      if (qs.get('status')) filter.status = qs.get('status');
+      
+      // Note: we don't apply qs.get('status') to the DB filter if we are mapping it dynamically for students.
+      if (!targetStudentId && qs.get('status')) {
+        filter.status = qs.get('status');
+      }
 
-      const assignments = await AssignmentModel.find(filter).sort({ dueDate: 1 }).lean();
+      let assignments = await AssignmentModel.find(filter).sort({ dueDate: 1 }).lean();
+
+      // Dynamic mapping for students
+      if (targetStudentId && mongoose.Types.ObjectId.isValid(targetStudentId)) {
+        const submissions = await AssignmentSubmissionModel.find({ studentId: targetStudentId }).lean();
+        const subMap = new Map(submissions.map(s => [String(s.assignmentId), s]));
+        
+        assignments = assignments.map((a: any) => {
+          const sub = subMap.get(String(a._id));
+          if (sub) {
+            a.status = sub.marks !== undefined ? 'GRADED' : (sub.isLate ? 'LATE' : 'SUBMITTED');
+          } else {
+            a.status = new Date() > new Date(a.dueDate) ? 'OVERDUE' : 'NEW';
+          }
+          return a;
+        });
+
+        // Apply status filter after mapping if necessary
+        if (qs.get('status')) {
+          assignments = assignments.filter(a => a.status === qs.get('status'));
+        }
+      }
+
       sendJson(res, 200, { assignments });
     } catch (err) {
       sendJson(res, 500, { message: (err as Error).message });
@@ -642,10 +704,6 @@ export async function handleEvaluationRequest(
             isLate,
           });
         }
-
-        // Update assignment status
-        assignment.status = isLate ? 'LATE' : 'SUBMITTED';
-        await assignment.save();
 
         // Log progress event
         await ProgressEventModel.create({
@@ -790,9 +848,6 @@ export async function handleEvaluationRequest(
       sub.gradedAt = new Date();
       sub.gradedBy = user.userId as any;
       await sub.save();
-
-      // Update assignment status → GRADED
-      await AssignmentModel.findByIdAndUpdate(sub.assignmentId, { status: 'GRADED' });
 
       // Async leaderboard upsert (non-blocking)
       upsertLeaderboardAssignmentScore(String(sub.studentId)).catch(() => {});

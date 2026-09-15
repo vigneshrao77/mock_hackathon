@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Card, Table, Text, Group, Badge, Button, TextInput, Skeleton, Avatar } from '@mantine/core'
-import { IconSearch, IconEye } from '@tabler/icons-react'
+import { IconSearch, IconEye, IconPlus } from '@tabler/icons-react'
 import { PageHeader } from '../../components/PageHeader'
 import { mockApi } from '../../services/mockApi'
 import type { Student } from '../../types'
@@ -23,7 +23,11 @@ export default function AdminStudents() {
 
   return (
     <div>
-      <PageHeader title="Student Management" subtitle="Admin directory of registered students across all cohorts" />
+      <PageHeader 
+        title="Student Management" 
+        subtitle="Admin directory of registered students across all cohorts" 
+        action={<Button leftSection={<IconPlus size={16} />}>Add Student</Button>}
+      />
 
       <Card withBorder padding="lg" radius="md">
         <TextInput

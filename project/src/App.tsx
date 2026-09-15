@@ -51,7 +51,7 @@ import AdminTeachers from './pages/admin/AdminTeachers'
 import AdminAdmins from './pages/admin/AdminAdmins'
 // AdminPrograms removed — programs data model kept for referential integrity
 import AdminSubjects from './pages/admin/AdminSubjects'
-import AdminAnalytics from './pages/admin/AdminAnalytics'
+
 import AdminReports from './pages/admin/AdminReports'
 // AdminAudit removed — audit events surface in Notifications (isAudit: true)
 import AdminNotifications from './pages/admin/AdminNotifications'
@@ -179,7 +179,7 @@ function AdminRoutes() {
       <Route path="admins" element={<AdminAdmins />} />
       {/* programs route removed */}
       <Route path="subjects" element={<AdminSubjects />} />
-      <Route path="analytics" element={<AdminAnalytics />} />
+
       <Route path="reports" element={<AdminReports />} />
       {/* audit route removed — events appear in Notifications */}
       <Route path="notifications" element={<AdminNotifications />} />

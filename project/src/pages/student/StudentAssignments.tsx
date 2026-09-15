@@ -32,9 +32,6 @@ export default function StudentAssignments() {
   )
   const { data: subjects } = useAsync(() => mockApi.getSubjects(), [])
 
-  if (loading) return <LoadingState message="Loading assignments..." />
-  if (error) return <ErrorState message={error} onRetry={refetch} />
-
   const getSubjectName = (subjectId?: string) =>
     (subjects || []).find((s) => s.id === subjectId)?.name || 'General'
 
@@ -51,6 +48,9 @@ export default function StudentAssignments() {
     }
     return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [assignments, search, statusFilter])
+
+  if (loading) return <LoadingState message="Loading assignments..." />
+  if (error) return <ErrorState message={error} onRetry={refetch} />
 
   if ((assignments || []).length === 0) {
     return (

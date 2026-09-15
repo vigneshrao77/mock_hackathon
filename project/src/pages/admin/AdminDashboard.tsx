@@ -96,9 +96,7 @@ export default function AdminDashboard() {
               <Button color="teal" variant="light" leftSection={<IconSchool size={16} />} onClick={() => navigate('/admin/teachers')}>
                 Manage Teachers ({teachers.length})
               </Button>
-              <Button color="blue" variant="light" leftSection={<IconChartDots size={16} />} onClick={() => navigate('/admin/analytics')}>
-                View Platform Analytics
-              </Button>
+
             </Stack>
           </Card>
         </Grid.Col>

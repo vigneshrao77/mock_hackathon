@@ -124,7 +124,7 @@ export default function TeacherAssignmentCreate() {
           <Select
             label="Student" required searchable clearable
             placeholder="Select a student…"
-            data={studentOptions}
+            data={[{ value: 'ALL', label: 'All Students' }, ...studentOptions]}
             value={form.studentId}
             onChange={(v) => setForm({ ...form, studentId: v || '' })}
             nothingFoundMessage={
