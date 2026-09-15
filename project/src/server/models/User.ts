@@ -1,13 +1,19 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type UserRole = 'admin' | 'teacher' | 'student';
+export type UserStatus = 'PENDING_VERIFICATION' | 'ACTIVE' | 'REJECTED' | 'INACTIVE';
 
 export interface IUser {
   name: string;
   email: string;
   passwordHash: string;
   role: UserRole;
+  status: UserStatus;
+  phone?: string;
+  avatar?: string;
+  lastLogin?: Date;
   createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface IUserDocument extends IUser, Document {}
@@ -38,6 +44,14 @@ const UserSchema = new Schema<IUserDocument>(
       },
       required: [true, 'Role is required'],
     },
+    status: {
+      type: String,
+      enum: ['PENDING_VERIFICATION', 'ACTIVE', 'REJECTED', 'INACTIVE'],
+      default: 'PENDING_VERIFICATION',
+    },
+    phone: { type: String, trim: true },
+    avatar: { type: String, trim: true },
+    lastLogin: { type: Date },
   },
   {
     timestamps: true,

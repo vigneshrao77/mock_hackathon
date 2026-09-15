@@ -2,9 +2,8 @@ import type { IconNode } from '@tabler/icons-react'
 import {
   IconLayoutDashboard, IconBook, IconClipboardList, IconClipboardCheck,
   IconChartBar, IconTrophy, IconHeart, IconMessage, IconBell, IconUser,
-  IconUsers, IconUserPlus, IconSchool, IconFileText, IconStethoscope,
-  IconNotes, IconUsersGroup, IconShield, IconChartDots, IconReport,
-  IconHistory, IconSettings,
+  IconUsers, IconUserPlus, IconSchool, IconStethoscope,
+  IconShield, IconChartDots, IconReport,
 } from '@tabler/icons-react'
 import type { UserRole } from '../types'
 
@@ -35,7 +34,7 @@ export const navConfig: Record<UserRole, NavItem[]> = {
     { label: 'Assessments', icon: IconClipboardCheck, path: '/teacher/assessments' },
     { label: 'Assignments', icon: IconClipboardList, path: '/teacher/assignments' },
     { label: 'Health Checks', icon: IconStethoscope, path: '/teacher/health-checks' },
-    { label: 'Progress', icon: IconChartBar, path: '/teacher/progress' },
+    // Progress tab removed per requirements — progress visible per-student in Students view
     { label: 'Chat', icon: IconMessage, path: '/teacher/chat' },
     { label: 'Notifications', icon: IconBell, path: '/teacher/notifications' },
     { label: 'Profile', icon: IconUser, path: '/teacher/profile' },
@@ -45,11 +44,11 @@ export const navConfig: Record<UserRole, NavItem[]> = {
     { label: 'Students', icon: IconUsers, path: '/admin/students' },
     { label: 'Teachers', icon: IconSchool, path: '/admin/teachers' },
     { label: 'Admins', icon: IconShield, path: '/admin/admins' },
-    { label: 'Programs', icon: IconSettings, path: '/admin/programs' },
+    // Programs removed — data model kept for referential integrity
     { label: 'Subjects', icon: IconBook, path: '/admin/subjects' },
     { label: 'Analytics', icon: IconChartDots, path: '/admin/analytics' },
     { label: 'Reports', icon: IconReport, path: '/admin/reports' },
-    { label: 'Audit Logs', icon: IconHistory, path: '/admin/audit' },
+    // Audit Logs removed — audit events now surface in Notifications (isAudit: true)
     { label: 'Notifications', icon: IconBell, path: '/admin/notifications' },
     { label: 'Profile', icon: IconUser, path: '/admin/profile' },
   ],

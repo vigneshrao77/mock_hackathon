@@ -38,7 +38,7 @@ import TeacherAssignments from './pages/teacher/TeacherAssignments'
 import TeacherAssignmentCreate from './pages/teacher/TeacherAssignmentCreate'
 import TeacherAssignmentDetail from './pages/teacher/TeacherAssignmentDetail'
 import TeacherHealthChecks from './pages/teacher/TeacherHealthChecks'
-import TeacherProgress from './pages/teacher/TeacherProgress'
+// TeacherProgress removed — progress visible per-student in Students view
 import TeacherChat from './pages/teacher/TeacherChat'
 import TeacherNotifications from './pages/teacher/TeacherNotifications'
 import TeacherProfile from './pages/teacher/TeacherProfile'
@@ -48,11 +48,11 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminStudents from './pages/admin/AdminStudents'
 import AdminTeachers from './pages/admin/AdminTeachers'
 import AdminAdmins from './pages/admin/AdminAdmins'
-import AdminPrograms from './pages/admin/AdminPrograms'
+// AdminPrograms removed — programs data model kept for referential integrity
 import AdminSubjects from './pages/admin/AdminSubjects'
 import AdminAnalytics from './pages/admin/AdminAnalytics'
 import AdminReports from './pages/admin/AdminReports'
-import AdminAudit from './pages/admin/AdminAudit'
+// AdminAudit removed — audit events surface in Notifications (isAudit: true)
 import AdminNotifications from './pages/admin/AdminNotifications'
 import AdminProfile from './pages/admin/AdminProfile'
 
@@ -160,7 +160,7 @@ function TeacherRoutes() {
       <Route path="assignments/create" element={<TeacherAssignmentCreate />} />
       <Route path="assignments/:id" element={<TeacherAssignmentDetail />} />
       <Route path="health-checks" element={<TeacherHealthChecks />} />
-      <Route path="progress" element={<TeacherProgress />} />
+      {/* Teacher progress route removed */}
       <Route path="chat" element={<TeacherChat />} />
       <Route path="notifications" element={<TeacherNotifications />} />
       <Route path="profile" element={<TeacherProfile />} />
@@ -175,11 +175,11 @@ function AdminRoutes() {
       <Route path="students" element={<AdminStudents />} />
       <Route path="teachers" element={<AdminTeachers />} />
       <Route path="admins" element={<AdminAdmins />} />
-      <Route path="programs" element={<AdminPrograms />} />
+      {/* programs route removed */}
       <Route path="subjects" element={<AdminSubjects />} />
       <Route path="analytics" element={<AdminAnalytics />} />
       <Route path="reports" element={<AdminReports />} />
-      <Route path="audit" element={<AdminAudit />} />
+      {/* audit route removed — events appear in Notifications */}
       <Route path="notifications" element={<AdminNotifications />} />
       <Route path="profile" element={<AdminProfile />} />
     </Routes>
