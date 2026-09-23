@@ -42,7 +42,7 @@ function verifyToken(req: IncomingMessage): TokenPayload | null {
   }
 }
 
-export async function handleChatRequest(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+export async function handleChatRequest(req: IncomingMessage, res: ServerResponse, io?: any): Promise<boolean> {
   const rawUrl = req.url || '';
   if (!rawUrl.startsWith('/api/chat') && !rawUrl.startsWith('/api/users')) {
     return false;
@@ -207,6 +207,12 @@ export async function handleChatRequest(req: IncomingMessage, res: ServerRespons
            conv.unreadCount += 1;
         }
         await conv.save();
+
+        if (io) {
+          const targetId = user.role === 'student' ? conv.teacherId.toString() : conv.studentId.toString();
+          io.to(targetId).emit('newMessage', msg);
+          io.to(targetId).emit('conversationUpdated', conv);
+        }
 
         sendJson(res, 201, { data: msg });
       } catch (err) {

@@ -4,10 +4,12 @@ import { IconSend, IconMessage, IconPlus } from '@tabler/icons-react'
 import { PageHeader } from '../../components/PageHeader'
 import { mockApi } from '../../services/mockApi'
 import { useAuth } from '../../context/AuthContext'
+import { useSocket } from '../../context/SocketContext'
 import type { Conversation, Message, Student } from '../../types'
 
 export default function TeacherChat() {
   const { user } = useAuth()
+  const { socket } = useSocket()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [students, setStudents] = useState<Student[]>([])
   const [activeConv, setActiveConv] = useState<Conversation | null>(null)
@@ -40,9 +42,45 @@ export default function TeacherChat() {
   const handleSend = async () => {
     if (!inputText.trim() || !activeConv || !user) return
     const msg = await mockApi.sendMessage(activeConv.id, user.id, user.role, inputText)
-    setMessages((prev) => [...prev, msg])
+    setMessages((prev) => {
+      if (prev.find(m => m.id === msg.id)) return prev;
+      return [...prev, msg];
+    });
     setInputText('')
   }
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const onNewMessage = (msg: Message) => {
+      setMessages((prev) => {
+        // Only append if it's for the currently active conversation
+        if (activeConv && msg.conversationId === activeConv.id) {
+          if (prev.find(m => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        }
+        return prev;
+      });
+    };
+    
+    const onConversationUpdated = (conv: Conversation) => {
+       setConversations((prev) => {
+         const exists = prev.find(c => c.id === conv.id);
+         if (exists) {
+           return prev.map(c => c.id === conv.id ? { ...c, lastMessageAt: conv.lastMessageAt, unreadCount: conv.unreadCount } : c).sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+         }
+         return [conv, ...prev].sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+       });
+    };
+
+    socket.on('newMessage', onNewMessage);
+    socket.on('conversationUpdated', onConversationUpdated);
+    
+    return () => {
+      socket.off('newMessage', onNewMessage);
+      socket.off('conversationUpdated', onConversationUpdated);
+    };
+  }, [socket, activeConv]);
 
   if (loading) return <Skeleton height={400} />
 

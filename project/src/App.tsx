@@ -5,6 +5,7 @@ import { NavigationProgress } from '@mantine/nprogress'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { theme } from './theme'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { SocketProvider } from './context/SocketContext'
 import { AppLayout } from './layouts/AppLayout'
 import './styles/responsive.css'
 
@@ -196,7 +197,9 @@ export default function App() {
       <ModalsProvider>
         <BrowserRouter>
           <AuthProvider>
-            <AppRoutes />
+            <SocketProvider>
+              <AppRoutes />
+            </SocketProvider>
           </AuthProvider>
         </BrowserRouter>
       </ModalsProvider>

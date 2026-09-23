@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Card, Text, Group, Stack, ThemeIcon, Box, Avatar, TextInput, Button, ScrollArea, Badge, ActionIcon, Modal, Loader } from '@mantine/core'
 import { useAuth } from '../../context/AuthContext'
+import { useSocket } from '../../context/SocketContext'
 import { mockApi } from '../../services/mockApi'
 import { useAsync } from '../../hooks/useAsync'
 import { PageHeader } from '../../components/PageHeader'
@@ -14,6 +15,7 @@ import type { Conversation, Message, Teacher } from '../../types'
 
 export default function StudentChat() {
   const { user } = useAuth()
+  const { socket } = useSocket()
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null)
   const [messageText, setMessageText] = useState('')
   const [allMessages, setAllMessages] = useState<Message[]>([])
@@ -55,12 +57,41 @@ export default function StudentChat() {
     }
   }, [allMessages])
 
+  useEffect(() => {
+    if (!socket) return;
+
+    const onNewMessage = (msg: Message) => {
+      setAllMessages((prev) => {
+        if (selectedConv && msg.conversationId === selectedConv.id) {
+          if (prev.find(m => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        }
+        return prev;
+      });
+    };
+
+    const onConversationUpdated = (conv: Conversation) => {
+      refetch();
+    };
+
+    socket.on('newMessage', onNewMessage);
+    socket.on('conversationUpdated', onConversationUpdated);
+
+    return () => {
+      socket.off('newMessage', onNewMessage);
+      socket.off('conversationUpdated', onConversationUpdated);
+    };
+  }, [socket, selectedConv]);
+
   const handleSend = async () => {
     if (!messageText.trim() || !selectedConv || !user) return
     setSending(true)
     try {
       const msg = await mockApi.sendMessage(selectedConv.id, user.id, 'student', messageText)
-      setAllMessages((prev) => [...prev, msg])
+      setAllMessages((prev) => {
+        if (prev.find(m => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
       setMessageText('')
       refetch()
     } catch {
